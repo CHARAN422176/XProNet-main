@@ -12,6 +12,7 @@ from modules.tokenizers import Tokenizer
 from modules.trainer import Trainer
 from modules.utils import parse_agrs
 import torch.distributed as dist
+distributed = False
 import os
 from modules.logger import create_logger
 
@@ -32,7 +33,8 @@ def main():
 
     torch.cuda.set_device(args.local_rank)
     # torch.distributed.init_process_group(backend='nccl', init_method='env://', world_size=world_size)
-    rank = dist.get_rank()
+    # rank = dist.get_rank()
+    rank = 0
     device_id = rank % torch.cuda.device_count()
     # torch.distributed.barrier()
 
