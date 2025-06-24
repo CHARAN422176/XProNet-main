@@ -31,8 +31,13 @@ def main():
     world_size = args.n_gpu
 
     torch.cuda.set_device(args.local_rank)
-    torch.distributed.init_process_group(backend='nccl', init_method='env://', world_size=world_size)
-    rank = dist.get_rank()
+    # torch.distributed.init_process_group(backend='nccl', init_method='env://', world_size=world_size)
+    if dist.is_available() and 'RANK' in os.environ:
+        dist.init_process_group(backend='nccl', init_method='env://', world_size=world_size)
+        rank = dist.get_rank()
+    else:
+        rank = 0
+        world_size = 1
     device_id = rank % torch.cuda.device_count()
     # torch.distributed.barrier()
 
