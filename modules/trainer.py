@@ -103,7 +103,7 @@ class BaseTrainer(object):
                 if self.mnt_mode != 'off':
                     try:
                         # check whether model performance improved or not, according to specified metric(mnt_metric)
-                        cur_metric = log['val_BLEU_4'] + 0.33 * log['val_BLEU_1'] + 0.67 * log['val_METEOR']
+                        cur_metric = log['val_BLEU_4'] + 0.33 * log['val_BLEU_1']
                         improved = (self.mnt_mode == 'min' and log[self.mnt_metric] <= self.mnt_best) or \
                                    (self.mnt_mode == 'max' and cur_metric >= self.mnt_best)
                                    #(self.mnt_mode == 'max' and (log[self.mnt_metric]) >= self.mnt_best)
