@@ -40,8 +40,10 @@ class R2DataLoader(DataLoader):
         else:
             self.dataset = MimiccxrSingleImageDataset(self.args, self.tokenizer, self.split, transform=self.transform)
 
-        num_tasks = dist.get_world_size()
-        global_rank = dist.get_rank()
+        # num_tasks = dist.get_world_size()
+        num_tasks=1
+        # global_rank = dist.get_rank()
+        global_rank = 0
         self.sampler = torch.utils.data.DistributedSampler(
             self.dataset, num_replicas=num_tasks, rank=global_rank, shuffle=self.shuffle
         )
