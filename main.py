@@ -78,6 +78,7 @@ def main():
     optimizer = build_optimizer(args, model)
 
     model = model.to(device_id)
+    model.device = device
     # model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[device_id], broadcast_buffers=False,
                                                     #   find_unused_parameters=False)
     # model_without_ddp = model.module
