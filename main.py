@@ -76,7 +76,7 @@ def main():
     # build model architecture
     model = XProNet(args, tokenizer)
     optimizer = build_optimizer(args, model)
-
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device_id)
     model.device = device
     # model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[device_id], broadcast_buffers=False,
