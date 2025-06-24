@@ -20,7 +20,7 @@ def setup(world_size):
     os.environ["MASTER_ADDR"] = "localhost"
     os.environ["MASTER_PORT"] = "12345"
     os.environ["RANK"] = "0"
-    os.environ["WORLD_SIZE"] = world_size
+    os.environ["WORLD_SIZE"] = "1"
 
 
 def main():
@@ -31,7 +31,7 @@ def main():
     world_size = args.n_gpu
 
     torch.cuda.set_device(args.local_rank)
-    torch.distributed.init_process_group(backend='nccl', init_method='env://', world_size=world_size)
+    # torch.distributed.init_process_group(backend='nccl', init_method='env://', world_size=world_size)
     rank = dist.get_rank()
     device_id = rank % torch.cuda.device_count()
     # torch.distributed.barrier()
