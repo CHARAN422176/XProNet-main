@@ -84,7 +84,8 @@ def main():
     model_without_ddp = model
 
 
-    if dist.get_rank() == args.local_rank:
+    # if dist.get_rank() == args.local_rank:
+    if rank == args.local_rank:
         logger.info(args)
         logger.info(f"RANK and WORLD_SIZE in environ: {rank}/{world_size}")
         n_parameters = sum(p.numel() for p in model_without_ddp.parameters() if p.requires_grad)
