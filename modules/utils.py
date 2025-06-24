@@ -215,8 +215,18 @@ def my_con_loss(features, num_classes, num_protypes, labels, margin = 0.4, alpha
     loss /= (B * B)
     return loss
 
+# def reduce_tensor(tensor):
+#     rt = tensor.clone()
+#     dist.all_reduce(rt, op=dist.ReduceOp.SUM)
+#     rt /= dist.get_world_size()
+#     return rt
+
 def reduce_tensor(tensor):
-    rt = tensor.clone()
-    dist.all_reduce(rt, op=dist.ReduceOp.SUM)
-    rt /= dist.get_world_size()
-    return rt
+    if dist.is_available() and dist.is_initialized():
+        rt = tensor.clone()
+        dist.all_reduce(rt, op=dist.ReduceOp.SUM)
+        rt /= dist.get_world_size()
+        return rt
+    else:
+        # Distributed is not initialized — just return tensor directly
+        return tensor
