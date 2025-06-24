@@ -9,6 +9,10 @@ from torch.cuda.amp import GradScaler, autocast
 from modules.utils import reduce_tensor
 import torch.distributed as dist
 
+def get_rank_safe():
+    import torch.distributed as dist
+    return get_rank_safe() if dist.is_available() and dist.is_initialized() else 0
+
 
 class BaseTrainer(object):
     def __init__(self, model, criterion, metric_ftns, optimizer, args, lr_scheduler, logger):
@@ -123,11 +127,11 @@ class BaseTrainer(object):
                         self.logger.info("Validation performance didn\'t improve for {} epochs. " "Training stops.".format(
                             self.early_stop))
                         break
-                if dist.get_rank() == self.local_rank and epoch % self.save_period == 0:
+                if get_rank_safe() == self.local_rank and epoch % self.save_period == 0:
                     self._save_checkpoint(epoch, save_best=best)
             self.logger.info(f'best performance in epoch: {best_epoch}')
 
-        if dist.get_rank() == self.local_rank:
+        if get_rank_safe() == self.local_rank:
             self._print_best()
 
     def _synchronize_data(self, log):
