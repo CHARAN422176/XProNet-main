@@ -283,9 +283,12 @@ class Trainer(BaseTrainer):
                     self.device), reports_masks.to(self.device), labels.to(self.device)
                 with autocast(dtype=torch.float16, enabled=self.use_amp):
                     output, _ = self.model(images, labels = labels, mode='sample')
-                # change to self.model.module for multi-gpu
-                reports = self.model.module.tokenizer.decode_batch(output.cpu().numpy())
-                ground_truths = self.model.module.tokenizer.decode_batch(reports_ids[:, 1:].cpu().numpy())
+                # # change to self.model.module for multi-gpu
+                # reports = self.model.module.tokenizer.decode_batch(output.cpu().numpy())
+                # ground_truths = self.model.module.tokenizer.decode_batch(reports_ids[:, 1:].cpu().numpy())
+                reports = self.model.tokenizer.decode_batch(output.cpu().numpy())
+                ground_truths = self.model.tokenizer.decode_batch(reports_ids[:, 1:].cpu().numpy())
+
                 val_res.extend(reports)
                 val_gts.extend(ground_truths)
 
