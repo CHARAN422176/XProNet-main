@@ -42,7 +42,8 @@ def main():
     # torch.distributed.barrier()
 
     # fix random seeds
-    seed = args.seed + dist.get_rank()
+    # seed = args.seed + dist.get_rank()
+    seed = args.seed + rank
     torch.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
