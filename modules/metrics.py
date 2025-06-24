@@ -1,5 +1,5 @@
 from pycocoevalcap.bleu.bleu import Bleu
-from pycocoevalcap.meteor import Meteor
+# from pycocoevalcap.meteor import Meteor
 from pycocoevalcap.rouge import Rouge
 from pycocoevalcap.cider.cider import Cider
 from sklearn.metrics import roc_auc_score, f1_score, recall_score, precision_score
@@ -9,7 +9,7 @@ class CaptionScorer:
     def __init__(self, all_texts):
         self.scorers = [
         (Bleu(4), ["BLEU_1", "BLEU_2", "BLEU_3", "BLEU_4"]),
-        (Meteor(), "METEOR"),
+        # (Meteor(), "METEOR"),
         (Rouge(), "ROUGE_L"),
         (Cider(all_texts), "Cider")
     ]
@@ -49,7 +49,7 @@ def compute_scores(gts, res):
     # Set up scorers
     scorers = [
         (Bleu(4), ["BLEU_1", "BLEU_2", "BLEU_3", "BLEU_4"]),
-        (Meteor(), "METEOR"),
+        # (Meteor(), "METEOR"),
         (Rouge(), "ROUGE_L"),
         (Cider(), "Cider")
     ]
