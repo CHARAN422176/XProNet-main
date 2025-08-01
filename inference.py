@@ -1,45 +1,72 @@
+import argparse
 import torch
-from models.models import XProNet
-from modules.dataloaders import R2DataLoader
+from torchvision import transforms
+from modules.models.xpronet import XProNet
 from modules.tokenizers import Tokenizer
-from modules.utils import parse_agrs
+from modules.datasets import IuxrayMultiImageDataset
+import json
+import pickle
+from PIL import Image
+import os
 
-# === Set your image ID and checkpoint ===
-image_id = 'CXR49_IM-2110'
-resume_path = 'results/iu_xray/model_best.pth'  # Update this if needed
+# ======== SET THESE ========
+IMAGE_ID = "CXR49_IM-2110"  # Image folder name (without extension)
+IMAGE_FOLDER = "/kaggle/input/iu-xray/iu_xray/images"
+ANNOTATION_PATH = "/kaggle/input/iu-xray/iu_xray/annotation.json"
+LABEL_PATH = "files/iu_xray/labels/labels_14.pickle"
+MODEL_PATH = "results/iu_xray/model_best.pth"  # Path to trained model
+INIT_PROTOTYPES_PATH = "files/iu_xray/init_prototypes.pt"
 
-# === Load args, model, tokenizer ===
-args = parse_agrs()
-args.batch_size = 1
-args.shuffle = False
-args.drop_last = False
-args.split = 'test'
-args.resume = resume_path
-args.beam_size = 3
-args.dataset_name = 'iu_xray'
+# ======== PREPARE ARGUMENTS ========
+class Args:
+    ann_path = ANNOTATION_PATH
+    image_dir = IMAGE_FOLDER
+    label_path = LABEL_PATH
+    init_protypes_path = INIT_PROTOTYPES_PATH
+    dataset_name = "iu_xray"
+    max_seq_length = 60
+    num_cluster = 14
+    num_protype = 20
+    cmm_size = 2048
+    cmm_dim = 512
+    d_img_ebd = 2048
+    d_txt_ebd = 768
+    topk = 15
+    beam_size = 3
 
-tokenizer = Tokenizer(args)
-model = XProNet(args, tokenizer)
-model.load_state_dict(torch.load(args.resume, map_location='cpu'))
-model.eval()
+args = Args()
+
+# ======== SETUP =========
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = model.to(device)
 
-# === Load test data ===
-dataloader = R2DataLoader(args, tokenizer, split='test', shuffle=False)
-dataset = dataloader.dataset
+transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor(),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+])
 
-# === Get image by ID ===
-image_idx = next((i for i, entry in enumerate(dataset.entries) if entry['image_id'] == image_id), None)
+# ======== LOAD TOKENIZER AND MODEL =========
+tokenizer = Tokenizer(args)
+model = XProNet(args, tokenizer, mode='sample').to(device)
+model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
+model.eval()
 
-if image_idx is None:
-    print(f"[ERROR] Image ID '{image_id}' not found.")
-else:
-    sample = dataset[image_idx]
-    image_tensor = sample['image'].unsqueeze(0).to(device)
+# ======== LOAD IMAGE PAIR =========
+image_paths = [f"{IMAGE_ID}/0.png", f"{IMAGE_ID}/1.png"]
+image_1 = transform(Image.open(os.path.join(IMAGE_FOLDER, image_paths[0])).convert('RGB'))
+image_2 = transform(Image.open(os.path.join(IMAGE_FOLDER, image_paths[1])).convert('RGB'))
+images = torch.stack((image_1, image_2), dim=0).unsqueeze(0).to(device)
 
-    with torch.no_grad():
-        output_ids = model.sample(image_tensor)
-        report = tokenizer.decode(output_ids[0])
+# ======== LOAD LABEL =========
+with open(LABEL_PATH, "rb") as f:
+    labels = pickle.load(f)
+array = IMAGE_ID.split('-')
+mod_id = f"{array[0]}-{array[1]}"
+label = torch.FloatTensor(labels[mod_id]).unsqueeze(0).to(device)
 
-    print(f"\n📋 Generated Report for image {image_id}:\n{report}\n")
+# ======== INFERENCE =========
+with torch.no_grad():
+    output, _ = model(images, labels=label, mode='sample')
+    decoded_report = tokenizer.decode(output[0].cpu().numpy())
+
+print("Generated Report:\n", decoded_report)
