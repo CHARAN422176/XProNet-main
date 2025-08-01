@@ -6,13 +6,25 @@ from modules.tokenizers import Tokenizer
 from modules.utils import parse_agrs
 import argparse
 
+
 def get_args():
+    # Step 1: parse original args
+    args = parse_agrs()
+
+    # Step 2: manually add new custom args
     parser = argparse.ArgumentParser()
     parser.add_argument('--image_id', type=str, required=True, help="Image ID without .png")
     parser.add_argument('--resume', type=str, required=True, help="Path to trained model")
-    parser = parse_agrs(parser)  # Extend your custom args
-    args = parser.parse_args()
+
+    # Step 3: parse only known args again (to override or extend)
+    extra_args, _ = parser.parse_known_args()
+
+    # Step 4: manually inject into args
+    args.image_id = extra_args.image_id
+    args.resume = extra_args.resume
+
     return args
+
 
 def main():
     args = get_args()
