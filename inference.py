@@ -3,7 +3,7 @@ import sys
 sys.path.append("/kaggle/working/XProNet-main")  # or wherever your project root is
 import torch
 from torchvision import transforms
-from modules.models.xpronet import XProNet
+from models.xpronet import XProNet
 from modules.tokenizers import Tokenizer
 from modules.datasets import IuxrayMultiImageDataset
 import json
