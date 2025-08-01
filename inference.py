@@ -14,7 +14,7 @@ IMAGE_ID = "CXR49_IM-2110"  # Image folder name (without extension)
 IMAGE_FOLDER = "/kaggle/input/iu-xray/iu_xray/images"
 ANNOTATION_PATH = "/kaggle/input/iu-xray/iu_xray/annotation.json"
 LABEL_PATH = "files/iu_xray/labels/labels_14.pickle"
-MODEL_PATH = "results/iu_xray/model_best.pth"  # Path to trained model
+MODEL_PATH = "/kaggle/input/xpronet_iu_xray/pytorch/default/1/iu_xray.pth"  # Path to trained model
 INIT_PROTOTYPES_PATH = "files/iu_xray/init_prototypes.pt"
 
 # ======== PREPARE ARGUMENTS ========
