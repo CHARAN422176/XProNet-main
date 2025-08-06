@@ -106,7 +106,7 @@ def main():
         try:
             from fvcore.nn import FlopCountAnalysis, parameter_count_table
 
-            dummy_input = torch.randn(1, 3, 224, 224).to(device_id)  # Adjust based on input shape
+            dummy_input = torch.randn(1, 3, 224, 224).to(device_id)  # ✅ use 3 channels for ResNet101
             flops = FlopCountAnalysis(model_without_ddp, dummy_input)
             logger.info(f"FLOPs: {flops.total() / 1e9:.2f} GFLOPs")
             logger.info("Param Table:\n" + parameter_count_table(model_without_ddp))
