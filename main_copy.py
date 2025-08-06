@@ -14,6 +14,7 @@ from modules.utils import parse_agrs
 import torch.distributed as dist
 import os
 from modules.logger import create_logger
+from fvcore.nn import FlopCountAnalysis, parameter_count_table
 
 
 def setup(world_size):
