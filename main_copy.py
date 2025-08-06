@@ -81,23 +81,28 @@ def main():
         n_parameters = sum(p.numel() for p in model_without_ddp.parameters() if p.requires_grad)
         logger.info(f"number of params: {n_parameters}")
 
-        # ----------- FLOPs counting with wrapper -----------
+        # ----------- FLOPs counting with custom num_views -----------
         try:
             from ptflops import get_model_complexity_info
             import torch.nn as nn
 
             class PtflopsWrapper(nn.Module):
-                def __init__(self, model):
+                def __init__(self, model, num_views=2):
                     super().__init__()
                     self.model = model
+                    self.num_views = num_views
                 def forward(self, x):
-                    # x: (batch, 3, 224, 224)
-                    # Make (batch, 1, 3, 224, 224) to satisfy your model's expected input
-                    x = x.unsqueeze(1)
+                    # x: (batch, num_views, 3, 224, 224)
                     return self.model(x)
 
-            wrapped_model = PtflopsWrapper(model_without_ddp).to("cpu").eval()
-            input_shape = (3, 224, 224)  # Adjust if your images are a different shape
+            num_views = 2  # Adjust if your model uses images[:,2] or higher indices!
+            wrapped_model = PtflopsWrapper(model_without_ddp, num_views=num_views).to("cpu").eval()
+            input_shape = (num_views, 3, 224, 224)  # no batch dim for ptflops
+
+            def input_constructor(input_res):
+                # input_res: (num_views, 3, 224, 224)
+                # Add batch size 1: (1, num_views, 3, 224, 224)
+                return {'x': torch.randn(1, *input_res)}
 
             with torch.no_grad():
                 macs, params = get_model_complexity_info(
@@ -105,14 +110,14 @@ def main():
                     input_shape,
                     as_strings=True,
                     print_per_layer_stat=False,
-                    verbose=False
+                    verbose=False,
+                    input_constructor=input_constructor
                 )
             logger.info(f"FLOPs: {macs}   Params: {params}")
             model_without_ddp.to(device_id)
         except Exception as e:
             logger.warning(f"Could not compute FLOPs due to error: {e}")
 
-        # If your model has a .flops() method, optionally keep:
         if hasattr(model_without_ddp, 'flops'):
             try:
                 flops = model_without_ddp.flops()
