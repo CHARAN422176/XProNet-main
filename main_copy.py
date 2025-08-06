@@ -29,7 +29,6 @@ def main():
     world_size = args.n_gpu
 
     torch.cuda.set_device(args.local_rank)
-    # torch.distributed.init_process_group(backend='nccl', init_method='env://', world_size=world_size)
     if dist.is_available() and 'RANK' in os.environ:
         dist.init_process_group(backend='nccl', init_method='env://', world_size=world_size)
         rank = dist.get_rank()
@@ -73,9 +72,6 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device_id)
     model.device = device
-    # model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[device_id], broadcast_buffers=False,
-    #                                                  find_unused_parameters=False)
-    # model_without_ddp = model.module
     model_without_ddp = model
 
     # PARAMETER COUNT AND FLOPS BLOCK
@@ -85,14 +81,27 @@ def main():
         n_parameters = sum(p.numel() for p in model_without_ddp.parameters() if p.requires_grad)
         logger.info(f"number of params: {n_parameters}")
 
-        # ----------- FLOPs counting -----------
+        # ----------- FLOPs counting with wrapper -----------
         try:
             from ptflops import get_model_complexity_info
-            input_shape = (3, 224, 224)  # Adjust if your images are a different size/channels
-            model_eval = model_without_ddp.to("cpu").eval()
+            import torch.nn as nn
+
+            class PtflopsWrapper(nn.Module):
+                def __init__(self, model):
+                    super().__init__()
+                    self.model = model
+                def forward(self, x):
+                    # x: (batch, 3, 224, 224)
+                    # Make (batch, 1, 3, 224, 224) to satisfy your model's expected input
+                    x = x.unsqueeze(1)
+                    return self.model(x)
+
+            wrapped_model = PtflopsWrapper(model_without_ddp).to("cpu").eval()
+            input_shape = (3, 224, 224)  # Adjust if your images are a different shape
+
             with torch.no_grad():
                 macs, params = get_model_complexity_info(
-                    model_eval,
+                    wrapped_model,
                     input_shape,
                     as_strings=True,
                     print_per_layer_stat=False,
@@ -103,6 +112,7 @@ def main():
         except Exception as e:
             logger.warning(f"Could not compute FLOPs due to error: {e}")
 
+        # If your model has a .flops() method, optionally keep:
         if hasattr(model_without_ddp, 'flops'):
             try:
                 flops = model_without_ddp.flops()
@@ -117,8 +127,10 @@ def main():
     # build optimizer, learning rate scheduler
     lr_scheduler = build_lr_scheduler(args, optimizer)
     # build trainer and start to train
-    trainer = Trainer(model, criterion, metrics, optimizer, args, lr_scheduler, logger, train_dataloader,
-                      val_dataloader, test_dataloader)
+    trainer = Trainer(
+        model, criterion, metrics, optimizer, args, lr_scheduler, logger,
+        train_dataloader, val_dataloader, test_dataloader
+    )
     trainer.train()
 
 if __name__ == '__main__':
