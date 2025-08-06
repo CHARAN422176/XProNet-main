@@ -121,17 +121,17 @@ def main():
                 logger.warning(f"Error calling model.flops(): {e}")
 
     # get function handles of loss and metrics
-    criterion = compute_loss
-    metrics = CaptionScorer(all_texts)
+    # criterion = compute_loss
+    # metrics = CaptionScorer(all_texts)
 
-    # build optimizer, learning rate scheduler
-    lr_scheduler = build_lr_scheduler(args, optimizer)
-    # build trainer and start to train
-    trainer = Trainer(
-        model, criterion, metrics, optimizer, args, lr_scheduler, logger,
-        train_dataloader, val_dataloader, test_dataloader
-    )
-    trainer.train()
+    # # build optimizer, learning rate scheduler
+    # lr_scheduler = build_lr_scheduler(args, optimizer)
+    # # build trainer and start to train
+    # trainer = Trainer(
+    #     model, criterion, metrics, optimizer, args, lr_scheduler, logger,
+    #     train_dataloader, val_dataloader, test_dataloader
+    # )
+    # trainer.train()
 
 if __name__ == '__main__':
     main()
