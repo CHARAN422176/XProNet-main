@@ -104,12 +104,13 @@ def main():
 
         # FLOPs using fvcore
         try:
-            from fvcore.nn import FlopCountAnalysis, parameter_count_table
+            dummy_input = torch.randn(1, 1, 224, 224).to(device_id)  # Grayscale dummy
+            dummy_input_rgb = dummy_input.repeat(1, 3, 1, 1)  # Expand to 3 channels
 
-            dummy_input = torch.randn(1, 3, 224, 224).to(device_id)  # ✅ use 3 channels for ResNet101
-            flops = FlopCountAnalysis(model_without_ddp, dummy_input)
+            flops = FlopCountAnalysis(model_without_ddp, dummy_input_rgb)
             logger.info(f"FLOPs: {flops.total() / 1e9:.2f} GFLOPs")
             logger.info("Param Table:\n" + parameter_count_table(model_without_ddp))
+
         except Exception as e:
             logger.warning(f"FLOPs or param count failed: {e}")
 
