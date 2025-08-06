@@ -77,6 +77,9 @@ def main():
     model = model.to(device_id)
     model.device = device
     model_without_ddp = model
+    orig_topk = args.topk
+    args.topk = 1
+
 
     # PARAMETER COUNT AND FLOPS COMPUTATION
     if rank == args.local_rank:
@@ -138,27 +141,27 @@ def main():
             except Exception as e:
                 logger.warning(f"Error calling model.flops(): {e}")
 
-    # get function handles of loss and metrics
-    criterion = compute_loss
-    metrics = CaptionScorer(all_texts)
+    # # get function handles of loss and metrics
+    # criterion = compute_loss
+    # metrics = CaptionScorer(all_texts)
 
-    # build optimizer, learning rate scheduler
-    lr_scheduler = build_lr_scheduler(args, optimizer)
+    # # build optimizer, learning rate scheduler
+    # lr_scheduler = build_lr_scheduler(args, optimizer)
 
-    # build trainer and start training
-    trainer = Trainer(
-        model,
-        criterion,
-        metrics,
-        optimizer,
-        args,
-        lr_scheduler,
-        logger,
-        train_dataloader,
-        val_dataloader,
-        test_dataloader,
-    )
-    trainer.train()
+    # # build trainer and start training
+    # trainer = Trainer(
+    #     model,
+    #     criterion,
+    #     metrics,
+    #     optimizer,
+    #     args,
+    #     lr_scheduler,
+    #     logger,
+    #     train_dataloader,
+    #     val_dataloader,
+    #     test_dataloader,
+    # )
+    # trainer.train()
 
 
 if __name__ == '__main__':
